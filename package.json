@@ -1,0 +1,16 @@
+{
+  "name": "browsernn",
+  "version": "1.0.0",
+  "description": "Javascript library for training neural networks in your browser",
+  "main": "./build/browsernn.js",
+  "author": "Tanner Carbonati",
+  "license": "MIT",
+  "keywords": [
+    "machine",
+    "deep",
+    "learning",
+    "neural",
+    "networks"
+  ],
+  "homepage": "https://carbonati.github.io/posts/browsernn"
+}
