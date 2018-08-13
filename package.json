@@ -1,6 +1,6 @@
 {
   "name": "browsernn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Javascript library for training neural networks in your browser",
   "main": "./build/browsernn.js",
   "author": "Tanner Carbonati",

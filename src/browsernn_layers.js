@@ -449,12 +449,88 @@
 		}
 	}
 
+	var DropoutLayer = function(params) {
+		// args:
+			// params: hyper parameters from the previous layer
+
+		// returns:
+			// instantiated dropout layer
+		
+		var params = params || {};
+
+		this.out_n = params.in_n;
+		this.out_d = params.in_d;
+		this.out_depth = params.in_depth;
+
+		// default dropout probability to 0.5
+		this.drop_prob = typeof params.drop_prob != 'undefined' ? params.drop_prob : 0.5;
+		this.dropped = zeros(this.out_n * this.out_d * this.out_depth);
+		this.layer_type = 'dropout';
+	}
+
+	DropoutLayer.prototype = {
+		forward: function(tensor, trainable, seed) {
+			// args:
+				// tensor: tensor holding data from the previous (activation) layer
+				// trainable: (boolean) whether the model is training or predicting
+
+			// returns:
+				// tensor after applying dropout to the previousl layers weights
+
+			this.in_units = tensor;
+			if(typeof trainable == 'undefined') trainable = false;
+
+			var output = new Tensor(this.out_n, this.out_d, this.out_depth, 0.0);
+			var N = tensor.w.length;
+			if(trainable) {
+				for (var i=0; i<N; i++) {
+					if (Math.random(seed) < this.drop_prob) {
+						output.w[i] = 0;
+						this.dropped[i] = true
+					} else {
+						output.w[i] = this.in_units.w[i];
+						this.dropped[i] = false
+					}
+				}
+			} else {
+				for (var i=0; i<N; i++) {
+					// scaling activations when predicting
+					output.w[i] = this.in_units.w[i] * this.drop_prob;
+					
+				}
+			}
+
+			this.out_units = output;
+			return this.out_units;
+		},
+
+		backward: function() {
+			var h = this.in_units;
+			var chain_grad = this.out_units;
+			var N = h.w.length;
+
+			h.dw = zeros(N);
+			for (var i=0; i<N; i++) {
+				// if the value was not dropped pass in the gradient from the previous layer
+				// otherwise leave the gradient 0'd out
+				if(!(this.dropped[i])) {
+					h.dw[i] = chain_grad.dw[i];
+				}
+			}
+		},
+
+		getParamsAndGrads: function() {
+			return [];
+		}
+	}
+
 	global.InputLayer = InputLayer;
 	global.DenseLayer = DenseLayer;
 	global.LinearLayer = LinearLayer;
 	global.SigmoidLayer = SigmoidLayer;
 	global.TanhLayer = TanhLayer;
 	global.ReluLayer = ReluLayer;
+	global.DropoutLayer = DropoutLayer;
 	global.SoftmaxLayer = SoftmaxLayer;
 
 })(browsernn);
