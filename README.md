@@ -1,6 +1,6 @@
 # browserNN.js
 
-browserNN.js is an easy to use javascript library that allows you to train deep neural networks in your own browser. 
+browserNN is an easy to use javascript library that allows you to train deep neural networks in your own browser. 
 
 For full documentation and a demo, please see: https://carbonati.github.io/posts/browsernn/
 
