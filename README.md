@@ -1,6 +1,6 @@
 # browserNN.js
 
-browserNN is an easy to use javascript library that allows you to train deep neural networks in your own browser. 
+browserNN is a javascript library that allows you to train deep neural networks in your web browser. Inpsired by [@karpathy](https://github.com/karpathy).
 
 For full documentation and a demo, please see: https://carbonati.github.io/posts/browsernn/
 
@@ -15,11 +15,13 @@ layers.push({type: 'dense', n_neurons: 8, activation: 'relu'});
 layers.push({type: 'dense', n_neurons: 4, activation: 'tanh'}); 
 layers.push({type: 'softmax', n_classes: 2}); 
 
-params = {optimizer: 'sgd', 
-		learning_rate: .01, 
-		momentum: 0.01, 
-		batch_size: 10, 
-		l2_decay: 0.01};
+params = {
+    optimizer: 'sgd', 
+    learning_rate: .01, 
+    momentum: 0.01, 
+    batch_size: 32,
+    l2_decay: 0.01
+};
         
 trainer = new browsernn.Trainer(model, layers, params); 
 ```
