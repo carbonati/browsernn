@@ -40,7 +40,7 @@
 
 			// returns:
 				// Trains the model for 1 full epoch then returns an object
-                // containing meta data with the loss and cost metrics
+				// containing meta data with the loss and cost metrics
 
 			var start_dt = new Date().getTime();
 			this.model.forward(x, true); // propagate the network forward
@@ -121,7 +121,6 @@
 					}
 				}
 			}
-			
 			return {
 				forward_time: forward_time,
 				backward_time: backward_time,

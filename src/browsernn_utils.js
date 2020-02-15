@@ -25,13 +25,11 @@
 	// generate a random real/integer/natural with some given parameters
 	var randr = function(a,b,seed) { return random(seed)*(b-a)+a; }
 	var randi = function(a,b,seed) { return Math.floor(random(seed)*(b-a)+a); }
-
-	
 	var randGauss = function(seed) {
 		// args:
 			// seed: seed to reinitialize random variables
-		// returns: 
-			// gaussian random variable 
+		// returns:
+			// gaussian random variable
 		var u = typeof seed != 'undefined' ? 2*random(seed)-1 : 2*Math.random()-1
 		var v = typeof seed != 'undefined' ? 2*random(seed)-1 : 2*Math.random()-1
 		var r = u*u + v*v;
@@ -42,24 +40,20 @@
 		var c = Math.sqrt(-2*Math.log(r)/r);
 	    return u*c;
 	}
-
-	var randn = function(mu,sigma,seed) { 
+	var randn = function(mu,sigma,seed) {
 		// args:
 			// mu: mean
 			// sigma: standard deviation
 			// seed: seed to reinitilize random variables
 		// returns:
 			// random real value sampled from mean mu and standard deviation sigma
-
-		return mu+randGauss(seed)*sigma 
+		return mu+randGauss(seed)*sigma
 	}
-
 	function flatten(arr) {
 		return arr.reduce(function (flat, toFlatten) {
 			return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
 		}, []);
 	}
-
 	function tanh(x) {
 		return (Math.exp(2*x) - 1) / (Math.exp(2*x) + 1);
 	}
@@ -74,4 +68,3 @@
 	global.tanh = tanh;
 
 })(browsernn);
-
