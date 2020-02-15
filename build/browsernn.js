@@ -42,8 +42,8 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		// args:
 			// seed: seed to reinitialize random variables
 
-		// returns: 
-			// gaussian random variable 
+		// returns:
+			// gaussian random variable
 
 		var u = typeof seed != 'undefined' ? 2*random(seed)-1 : 2*Math.random()-1
 		var v = typeof seed != 'undefined' ? 2*random(seed)-1 : 2*Math.random()-1
@@ -56,8 +56,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 	    return u*c;
 	}
 
-	var randn = function(mu,sigma,seed) { 
-
+	var randn = function(mu,sigma,seed) {
 		// args:
 			// mu: mean
 			// sigma: standard deviation
@@ -66,7 +65,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		// returns:
 			// random real value sampled from mean mu and standard deviation sigma
 
-		return mu+randGauss(seed)*sigma 
+		return mu+randGauss(seed)*sigma
 	}
 
 	// flattens tensors and matrices into 1-d arrays
@@ -83,16 +82,16 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 	var Tensor = function(n, d, depth, init_weight, seed) {
 		// args:
-			// n: number of rows 
-			// d: number of columns 
+			// n: number of rows
+			// d: number of columns
 			// depth: depth of the tensor
 				// if only 2 dimensions are passed as (n,d) the Tensor will create a depth of 1 as Tensor(1, 2, 1)
 			// init_weight: array or constant to set the tensors weights to
 			// seed: seed to reinitialize random variables
 
 		// returns:
-			// tensor with initialized weights of size (n, d, depth) 	
-		
+			// tensor with initialized weights of size (n, d, depth)
+
 		this.n = n;
 		this.d = d;
 		depth = typeof depth != 'undefined' ? depth : 1;
@@ -121,27 +120,27 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				this.w[i] = init_weight;
 			}
 		}
-		
+
 	}
-		
+
 
 	var InputLayer = function(params) {
 		// args;
-			// params: object containing the dimensions for the input layer of the model
-				// in the case of 2 dimension data like (x_1, x_2) the Tensor should take the shape Tensor(1, 2, 1)
+			// params: object containing the dimensions for the input layer of
+            //         the model.
+				// in the case of 2 dimension data like (x_1, x_2) the Tensor
+                // should take the shape Tensor(1, 2, 1).
 
 		// returns:
 			// instantiates the models input layer
-		
-		var params = params || {}; // if nothing is passed set param to be an empty object
 
-		if((params.depth < 1) || (typeof params.depth == 'undefined')) params.depth = 1;
-
-		// i technically don't need getparams()
+		var params = params || {};
+		if((params.depth < 1) || (typeof params.depth == 'undefined')) {
+            params.depth = 1;
+        }
 		this.out_n = params.n;
 		this.out_d = params.d;
 		this.out_depth = params.depth;
-
 		this.layer_type = 'input';
 	}
 
@@ -149,7 +148,8 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		forward: function(tensor, trainable) {
 			// args:
 				// tensor: tensor holding the input data (X)
-				// trainable: (boolean) whether the model is training or predicting
+				// trainable: (boolean) whether the model is
+                //            training or predicting
 
 			// returns:
 				// output of the input layer
@@ -167,20 +167,29 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		}
 	}
 
-
 	var DenseLayer = function(params, seed) {
 		// args:
-			// params: hyper parameters of the dense layer that must include the number of neurons and activation function
+			// params: hyper parameters of the dense layer that must include the
+            //      `  number of neurons and activation function
 			// seed: seed to reinitialize random variables
 
 		// returns:
 			// instantiated dense layer
-		
-		var params = params || {}; // if nothing is passed set param to be an empty object
+
+		var params = params || {};
 		this.n_neurons = params.n_neurons;
 
-		this.l1_decay_mul = typeof params.l1_decay_mul != 'undefined' ? 0.0 : params.l1_decay_mul;
-		this.l2_decay_mul = typeof params.l2_decay_mul != 'undefined' ? 1.0 : params.l2_decay_mul;
+        if (typeof params.l1_decay_mul != 'undefined') {
+            this.l1_decay_mul = 0.0;
+        } else {
+            this.l1_deca_mul = params.l1_decay_mul;
+        }
+
+        if (typeof params.l2_decay_mul != 'undefined') {
+            this.l2_decay_mul = 1.0;
+        } else {
+            this.l2_deca_mul = params.l2_decay_mul;
+        }
 
 		this.n_inputs = params.in_n * params.in_d * params.in_depth;
 		this.out_n = 1;
@@ -190,30 +199,30 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 		var bias = typeof params.bias_pref == 'undefined' ? 0.0 : params.bias_pref;
 
-		this.weight_mat = []; // this arrary will hold all the weights connected from each node between layer[i-1] and layer[i]
-		
+		this.weight_mat = [];
+
 		for (var i=0; i<this.n_neurons; i++) {
 			this.weight_mat.push(new Tensor(1, this.n_inputs, 1, undefined, seed));
 		}
 
 		this.biases = new Tensor(1, this.n_neurons, 1, bias);
 
-	
 	}
 
 	DenseLayer.prototype = {
 		forward: function(tensor, trainable) {
 			// args:
-				// tensor: tensor from the previous layer 
+				// tensor: tensor from the previous layer
 				// trainable: (boolean) true if training - false if predicting
 
 			// returns:
-				// linear transformation between neurons from the previous layer and the weights form the dense layer
+				// linear transformation between neurons from the previous layer
+                // and the weights form the dense layer
 
-			this.in_units = tensor; 
+			this.in_units = tensor;
 			var output = new Tensor(1, this.n_neurons, 1, 0.0);
 			var x = tensor.w;
-			
+
 			for (var i=0; i<this.n_neurons; i++) {
 				var linear_sum = 0.0;
 				var w_i = this.weight_mat[i].w;
@@ -235,48 +244,53 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				// computes derivatives and propagates back through the network
 
 			var input = this.in_units;
-			input.dw = zeros(input.w.length); // 
+			input.dw = global.zeros(input.w.length); //
 			// compute gradiet wrt weights & data
-			
+
 			for (var i=0; i<this.n_neurons; i++) {
 				var weight_vec = this.weight_mat[i];
-				var chain_grad = this.out_units.dw[i]; // gradient from previous layer
+				var chain_grad = this.out_units.dw[i]; // grad from prev layer
 				for (var j=0; j<this.n_inputs; j++) {
-					input.dw[j] += chain_grad * weight_vec.w[j]; // gradient wrt inputs
-					weight_vec.dw[j] += chain_grad * input.w[j]; // gradient wrt weights
+					input.dw[j] += chain_grad * weight_vec.w[j]; // gradwrt inputs
+					weight_vec.dw[j] += chain_grad * input.w[j]; // grad wrt weights
 				}
-			
+
 			this.biases.dw[i] += chain_grad;
-			}			
+			}
 		},
 
 		getParamsAndGrads: function() {
 			// args:
 
 			// returns:
-				// list containing the layers weights, derivatives, and regularized multipliers
+				// list containing the layers weights, derivatives, and
+                // regularized multipliers
 
 			var pg_ls = [];
 			for (var i=0; i<this.n_neurons; i++) {
-				pg_ls.push({ 
-					params: this.weight_mat[i].w, 
+				pg_ls.push({
+					params: this.weight_mat[i].w,
 					grads: this.weight_mat[i].dw,
 					l1_decay_mul: this.l1_decay_mul,
 					l2_decay_mul: this.l2_decay_mul
 				});
 			}
 
-			pg_ls.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
+			pg_ls.push({
+                params: this.biases.w,
+                grads: this.biases.dw,
+                l1_decay_mul: this.l1_decay_mul,
+                l2_decay_mul: this.l2_decay_mul
+            });
 			return pg_ls;
 		}
 	}
-
 
 	var LinearLayer = function(params) {
 		// args
 			// params: hyper parameters from the previous layer
 
-		// returns: 
+		// returns:
 			// instaniated linear layer
 
 		var params = params || {}
@@ -290,27 +304,25 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 	LinearLayer.prototype = {
 		forward: function(tensor, trainable) {
 			// args:
-				// tensor: tensor holding data from the previous layer (z)
-				// trainable: (boolean) whether the model is training or predicting
+				// tensor: tensor holding data from the previous layer (z).
+				// trainable: (boolean) whether the model is in train mode.
 
 			// returns:
-				// output tensor from the previous layer - since the dense computes a linear transformation
+				// output tensor from the previous layer - since the dense
+                // computes a linear transformation.
 
 			this.in_units = tensor;
 			this.out_units = tensor;
 
 			return tensor;
 		},
-
 		backward: function() {
 			return [];
 		},
-
 		getParamsAndGrads: function() {
 			return [];
 		}
 	}
-
 
 	var SoftmaxLayer = function(params) {
 		// args:
@@ -321,9 +333,10 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 		var params = params || {};
 
-		// when this function is called we will create a DenseLayer as well to connect the previous layer, 
+		// when this function is called we will create a DenseLayer as well to
+        // connect the previous layer,
 		// then compute the softmax
-		this.n_inputs = params.in_n * params.in_d * params.in_depth; 
+		this.n_inputs = params.in_n * params.in_d * params.in_depth;
 		this.out_n = 1;
 		this.out_d = this.n_inputs // out_d == n_classes always
 		this.out_depth = 1;
@@ -342,16 +355,17 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			this.in_units = tensor;
 			var output = new Tensor(1, this.n_inputs, 1, 0.0);
 
-			// the softmax becomes saturated when the inputs are extremely positive or negative
-			// also becomes saturated when the difference beween inputs is extremely large
-			// invariant to adding some scalar value (i.e. the maximum input)
-			var z = tensor.w; 
+			// the softmax becomes saturated when the inputs are extremely
+            // positive or negative, also becomes saturated when the difference
+            // beween inputs is extremely large invariant to adding some scalar
+            // value (i.e. the maximum input).
+			var z = tensor.w;
 			var z_max = tensor.w[0];
 			for (var i=1; i<this.out_d; i++) {
 				if(z[i] > z_max) z_max = z[i];
-			} 
-			
-			var e_vec = zeros(this.out_d);
+			}
+
+			var e_vec = global.zeros(this.out_d);
 			var e_sum = 0.0;
 			for (var i=0; i<this.out_d; i++) {
 				var e = Math.exp(z[i] - z_max);
@@ -378,7 +392,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				// negative log likelihood of the predicted class
 
 			var x = this.in_units;
-			x.dw = zeros(x.w.length);
+			x.dw = global.zeros(x.w.length);
 			for (var i=0; i<this.n_inputs; i++) {
 				var target = i == y ? 1.0 : 0.0;
 				var l_grad = this.out_units.w[i] - target;
@@ -393,7 +407,6 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		}
 	}
 
-
 	var SigmoidLayer = function(params) {
 		// args:
 			// params: hyper parameters from the previous (dense) layer
@@ -406,7 +419,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		this.out_d = params.in_d;
 		this.out_depth = params.in_depth;
 		this.layer_type = 'sigmoid';
-		
+
 	}
 
 	SigmoidLayer.prototype = {
@@ -440,7 +453,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			var z = this.in_units;
 			var h = this.out_units;
 			var N = z.w.length;
-			z.dw = zeros(N);
+			z.dw = global.zeros(N);
 
 			// sigma * (1 - sigma)
 			for (var i=0; i<N; i++) {
@@ -454,15 +467,15 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		}
 	}
 
-
 	var TanhLayer = function(params) {
 		// args
 			// params: hyper parameters from the previous layer
 
-		// returns: 
+		// returns:
 			// instaniated tanh layer
 
 		var params = params || {};
+
 		this.out_n = params.in_n;
 		this.out_d = params.in_d;
 		this.out_depth = params.in_depth;
@@ -477,14 +490,13 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 			// returns:
 				// element-wise Tanh on each unit of the previous layer
-
 			this.in_units = tensor;
 			var output = new Tensor(this.out_n, this.out_d, this.out_depth, 0.0);
 			var N = tensor.w.length;
 
 			// element-wise tanh
 			for (var i=0; i<N; i++) {
-				output.w[i] = tanh(tensor.w[i]);
+				output.w[i] = global.tanh(tensor.w[i]);
 			}
 			this.out_units = output;
 			return this.out_units;
@@ -496,22 +508,20 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			// returns:
 				// computes derivatives and propagates back through the network
 
-			var z = this.in_units; 
+			var z = this.in_units;
 			var h = this.out_units;
 			var N = z.w.length;
-			z.dw = zeros(N);
+			z.dw = global.zeros(N);
 
 			for (var i=0; i<N; i++) {
 				var h_i = h.w[i];
 				z.dw[i] = (1.0 - (h_i * h_i)) * h.dw[i];
 			}
 		},
-
 		getParamsAndGrads: function() {
 			return [];
 		}
 	}
-
 
 	var ReluLayer = function(params) {
 		// args:
@@ -560,7 +570,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			var h = this.out_units;
 			var N = z.w.length;
 
-			z.dw = zeros(N);
+			z.dw = global.zeros(N);
 			for (var i=0; i<N; i++) {
 				if (h.w[i] <= 0) z.dw[i] = 0;
 				else z.dw[i] = h.dw[i];
@@ -578,7 +588,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 		// returns:
 			// instantiated dropout layer
-		
+
 		var params = params || {};
 
 		this.out_n = params.in_n;
@@ -619,7 +629,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				for (var i=0; i<N; i++) {
 					// scaling activations when predicting
 					output.w[i] = this.in_units.w[i] * this.drop_prob;
-					
+
 				}
 			}
 
@@ -655,39 +665,44 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 	Model.prototype = {
 		createLayers: function(defs, seed) {
 			// args:
-				// defs: list containing each layer and their respective hyper parameters
+				// defs: list containing each layer and their respective hyper
+                //       parameters
 				// seed: seed to reinitialize random variables
 
 			// returns:
 				// object containing each layer as an instance
 
 			if (defs.length < 2) {
-				error_message = 'Error! The model must include at least one input layer and one loss layer.';
+				error_message = 'Error! The model must include at least one ' +
+                                'input layer and one loss layer.';
 				throw error_message;
 			}
 			if (defs[0].type != 'input') {
-				error_message = 'Error! The first layer of the model must be an input layer.';
+				error_message = 'Error! The first layer of the model must be ' +
+                                'an input layer.';
 				throw error_message;
 			}
-
 
 			var addLayers = function(layers) {
 				// args:
 					// layers: list containing each layer defined by the user
 
 				// returns:
-					// returns a list containing all user defined layers, activation functions and any extra layers not required to be defined by the user
+					// returns a list containing all user defined layers,
+                    // activation functions and any extra layers not required
+                    // to be defined by the user
 
 				var all_layers = [];
-				
+
 				for (var i=0; i<layers.length; i++) {
 					layer = layers[i]
-					
+
 					if (layer.type == 'regression') {
 						all_layers.push({type: 'dense', n_neurons: layer.n_neurons})
 	 				}
 
-	 				// for any output layer (softmax or SVM) create a dense network between the previous layer to the output layer
+	 				// for any output layer (softmax or SVM) create a dense
+                    // network between the previous layer to the output layer
 	 				if (layer.type == 'softmax' || layer.type == 'svm') {
 	 					all_layers.push({type: 'dense', n_neurons: layer.n_classes})
 	 				}
@@ -696,7 +711,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 						layer.bias_pref = 0.0;
 
 						if (typeof layer.activation == 'relu') {
-							layer.bias_pref = 0.1; 
+							layer.bias_pref = 0.1;
 						}
 					}
 
@@ -715,7 +730,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 							var gp_size = layer.group_size == 'undefined' ? 2 : layer.group_size;
 							all_layers.push({type: 'maxout', group_size: gp_size})
 						} else {
-							console.log('Error! ' + layer.activation + ' is not supported') 
+							console.log('Error! ' + layer.activation + ' is not supported')
 						}
 					}
 
@@ -733,15 +748,15 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			// instantiate each layer from the model
 			for (var i=0; i<layers.length; i++) {
 				var layer = layers[i];
-				
-				// for each layer (after input) pass in the previous layers weights 
+
+				// for each layer (after input) pass in the previous layers weights
 				if (i > 0) {
 					var prev_layer = this.layers[i-1];
 					layer.in_n = prev_layer.out_n;
 					layer.in_d = prev_layer.out_d;
 					layer.in_depth = prev_layer.out_depth;
 				}
-				
+
 				switch(layer.type) {
 					case 'dense': this.layers.push(new global.DenseLayer(layer, seed)); break;
 					case 'input': this.layers.push(new global.InputLayer(layer)); break;
@@ -753,19 +768,18 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 					case 'svm': this.layers.push(new global.SVMLayer(layer)); break;
 					case 'linear': this.layers.push(new global.LinearLayer(layer)); break;
 					case 'dropout': this.layers.push(new global.DropoutLayer(layer)); break;
-					default: console.log('Error! ' + layer.type + ' is not supported'); 
+					default: console.log('Error! ' + layer.type + ' is not supported');
 				}
-				
+
 			}
-		}, 
+		},
 
 		// forward propogation
 		forward: function(tensor, trainable) {
 			// args:
-				// tensor: 
+				// tensor:
 				// trainable: (boolean) true if training - false if predicting
-			
-			
+
 			if(typeof trainable == 'undefined') trainable = false;
 			var units = this.layers[0].forward(tensor, trainable);
 			for (var i=1; i<this.layers.length; i++) {
@@ -778,15 +792,15 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		backward: function(y) {
 			// args:
 				// y: output (label)
-			
+
 			// returns:
 				// loss score at the current state of the model
-				
+
 			var n_layers = this.layers.length;
 			var loss = this.layers[n_layers-1].backward(y); // cost from the output layer
 
 			for (var i=n_layers-2; i>=0; i--) {
-				this.layers[i].backward(); 
+				this.layers[i].backward();
 			}
 			return loss;
 		},
@@ -794,21 +808,21 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		getParamsAndGrads: function() {
 			// args:
 				//
-			
-			// returns: a list of objects that each contain the parameters, gradients and L1/L2 consts among all nodes in each layer 
-				// the list should return N neurons + N dense layers + N classes + 1
+
+			// returns: a list of objects that each contain the parameters,
+      //		      gradients and L1/L2 consts among all nodes in each layer
+			//          the list should return N neurons + N dense layers + N
+      //          classes + 1
 
 			var pg_ls = [];
 			for (var i=0; i<this.layers.length; i++) {
-				var layer_pg_ls = this.layers[i].getParamsAndGrads(); 
+				var layer_pg_ls = this.layers[i].getParamsAndGrads();
 				for (var j=0; j<layer_pg_ls.length; j++) {
-					pg_ls.push(layer_pg_ls[j]); 
+					pg_ls.push(layer_pg_ls[j]);
 				}
 			}
-
 			return pg_ls;
 		}
-
 	}
 
 
@@ -818,7 +832,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 			// layers: list containing all the layers in the network
 			// params: object containing all the hyperparameters
 
-		// returns: 
+		// returns:
 			// configures the model for training and returns:
 
 		this.model = model;
@@ -826,23 +840,22 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		this.learning_rate = typeof params.learning_rate == 'undefined' ? 0.01 : params.learning_rate;
 		this.l1_decay = typeof params.l1_decay == 'undefined' ? 0.0 : params.l1_decay;
 		this.l2_decay = typeof params.l2_decay == 'undefined' ? 0.0 : params.l2_decay;
-		this.batch_size = typeof params.batch_size == 'undefined' ? 1 : params.batch_size; // stochastic gradient descent
+		this.batch_size = typeof params.batch_size == 'undefined' ? 1 : params.batch_size;
 		this.optimizer = typeof params.optimizer == 'undefined' ? 'SGD' : params.optimizer;
-		this.momentum = typeof params.momentum == 'undefined' ? 0.9 : params.momentum; // 0.9 tends to have the best convergence rate
+		this.momentum = typeof params.momentum == 'undefined' ? 0.9 : params.momentum;
 		this.ro = typeof params.ro == 'undefined' ? 0.95 : params.ro;
 		this.epsilon = typeof params.epsilon == 'undefined' ? 1e-7 : params.epsilon;
-		
-		
+
+
 		this.seed = typeof params.seed == 'undefined' ? undefined : params.seed;
-		
+
 		this.iter = 0;
 		this.g_sum = []; // for momentum
 		this.x_sum = []; // for adagrad / adadelta
-		
+
 		model.createLayers(layers, this.seed);
 
-	}	
-
+	}
 
 	Trainer.prototype = {
 		fit: function(x, y) {
@@ -851,38 +864,38 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				// y: output (label)
 
 			// returns:
-				// Trains the model for 1 full epoch then returns an object containing meta data with the loss and cost metrics
-
+				// Trains the model for 1 full epoch then returns an object
+                // containing meta data with the loss and cost metrics
 
 			var start_dt = new Date().getTime();
-			this.model.forward(x, true); // propagate the network forward 
+			this.model.forward(x, true); // propagate the network forward
 			var end_dt = new Date().getTime();
 			var forward_time = end_dt - start_dt
 
 
 			var start_dt = new Date().getTime();
-			
+
 			var cost_loss = this.model.backward(y); // propagate the network backward
 			var l1_decay_loss = 0.0;
 			var l2_decay_loss = 0.0;
 			var end_dt = new Date().getTime();
 			var backward_time = end_dt - start_dt;
-			
+
 			this.iter++;
 			if (this.iter % this.batch_size == 0) {
-				var pg_ls = this.model.getParamsAndGrads();				
-				
+				var pg_ls = this.model.getParamsAndGrads();
+
 				if ((this.optimizer != 'SGD' || this.momentum > 0.0) && (this.g_sum.length == 0)) {
 					for (var i=0; i<pg_ls.length; i++) {
-						this.g_sum.push(zeros(pg_ls[i].params.length));
+						this.g_sum.push(global.zeros(pg_ls[i].params.length));
 						if (this.optimizer == 'adadelta') {
-							this.x_sum.push(zeros(pg_ls[i].params.length));
+							this.x_sum.push(global.zeros(pg_ls[i].params.length));
 						} else {
 							this.x_sum.push([]);
 						}
 					}
 				}
-				
+
 				for (var i=0; i<pg_ls.length; i++) {
 					var pg = pg_ls[i];
 					var p = pg.params;
@@ -896,7 +909,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 
 					for (var j=0; j<p.length; j++) {
 						l1_decay_loss += l1_decay * Math.abs(p[j]);
-						l2_decay_loss += l2_decay * p[j] * p[j] / 2; 
+						l2_decay_loss += l2_decay * p[j] * p[j] / 2;
 						var l1_grad = l1_decay * (p[j] > 0 ? 1.0 : -1.0 );
 						var l2_grad = l2_decay * p[j];
 
@@ -909,12 +922,12 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 							// Adagrad
 							var sub_g_i_j = g_i_j * g_i_j + g_sum_i[j];
 							g_sum_i[j] = sub_g_i_j;
-							p[j] -= this.learning_rate / Math.sqrt(sub_g_i_j + this.epsilon) * g_i_j;	
+							p[j] -= this.learning_rate / Math.sqrt(sub_g_i_j + this.epsilon) * g_i_j;
 						} else if (this.optimizer == 'adadelta') {
 							// Adadelta
 							g_sum_i[j] = this.ro * g_sum_i[j] + (1 - this.ro) * g_i_j * g_i_j;
 							var x_grad_i_j = - Math.sqrt(x_sum_i[j] + this.epsilon) / Math.sqrt(g_sum_i[j] + this.epsilon) * g_i_j;
-							
+
 							x_sum_i[j] = this.ro * x_sum_i[j] + (1 - this.ro) * x_grad_i_j * x_grad_i_j;
 							p[j] += x_grad_i_j;
 						} else {
@@ -929,9 +942,8 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 							}
 						}
 						// always 0 out the gradient
-						g[j] = 0.0; 
+						g[j] = 0.0;
 					}
-
 				}
 			}
 
@@ -943,8 +955,7 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 				cost_loss: cost_loss,
 				loss: cost_loss + l1_decay_loss + l2_decay_loss
 			}
-		}	
-
+		}
 	}
 
 	global.Tensor = Tensor;
@@ -977,4 +988,3 @@ var browsernn = browsernn || {VERSION: '1.0.0'};
 		module.exports = lib;
 	}
 })(browsernn);
-

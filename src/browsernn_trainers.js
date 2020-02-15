@@ -7,7 +7,7 @@
 			// layers: list containing all the layers in the network
 			// params: object containing all the hyperparameters
 
-		// returns: 
+		// returns:
 			// configures the model for training and returns:
 
 		this.model = model;
@@ -15,23 +15,22 @@
 		this.learning_rate = typeof params.learning_rate == 'undefined' ? 0.01 : params.learning_rate;
 		this.l1_decay = typeof params.l1_decay == 'undefined' ? 0.0 : params.l1_decay;
 		this.l2_decay = typeof params.l2_decay == 'undefined' ? 0.0 : params.l2_decay;
-		this.batch_size = typeof params.batch_size == 'undefined' ? 1 : params.batch_size; // stochastic gradient descent
+		this.batch_size = typeof params.batch_size == 'undefined' ? 1 : params.batch_size;
 		this.optimizer = typeof params.optimizer == 'undefined' ? 'SGD' : params.optimizer;
-		this.momentum = typeof params.momentum == 'undefined' ? 0.9 : params.momentum; // 0.9 tends to have the best convergence rate
+		this.momentum = typeof params.momentum == 'undefined' ? 0.9 : params.momentum;
 		this.ro = typeof params.ro == 'undefined' ? 0.95 : params.ro;
 		this.epsilon = typeof params.epsilon == 'undefined' ? 1e-7 : params.epsilon;
-		
-		
+
+
 		this.seed = typeof params.seed == 'undefined' ? undefined : params.seed;
-		
+
 		this.iter = 0;
 		this.g_sum = []; // for momentum
 		this.x_sum = []; // for adagrad / adadelta
-		
+
 		model.createLayers(layers, this.seed);
 
-	}	
-
+	}
 
 	Trainer.prototype = {
 		fit: function(x, y) {
@@ -40,27 +39,27 @@
 				// y: output (label)
 
 			// returns:
-				// Trains the model for 1 full epoch then returns an object containing meta data with the loss and cost metrics
-
+				// Trains the model for 1 full epoch then returns an object
+                // containing meta data with the loss and cost metrics
 
 			var start_dt = new Date().getTime();
-			this.model.forward(x, true); // propagate the network forward 
+			this.model.forward(x, true); // propagate the network forward
 			var end_dt = new Date().getTime();
 			var forward_time = end_dt - start_dt
 
 
 			var start_dt = new Date().getTime();
-			
+
 			var cost_loss = this.model.backward(y); // propagate the network backward
 			var l1_decay_loss = 0.0;
 			var l2_decay_loss = 0.0;
 			var end_dt = new Date().getTime();
 			var backward_time = end_dt - start_dt;
-			
+
 			this.iter++;
 			if (this.iter % this.batch_size == 0) {
-				var pg_ls = this.model.getParamsAndGrads();				
-				
+				var pg_ls = this.model.getParamsAndGrads();
+
 				if ((this.optimizer != 'SGD' || this.momentum > 0.0) && (this.g_sum.length == 0)) {
 					for (var i=0; i<pg_ls.length; i++) {
 						this.g_sum.push(global.zeros(pg_ls[i].params.length));
@@ -71,7 +70,7 @@
 						}
 					}
 				}
-				
+
 				for (var i=0; i<pg_ls.length; i++) {
 					var pg = pg_ls[i];
 					var p = pg.params;
@@ -85,7 +84,7 @@
 
 					for (var j=0; j<p.length; j++) {
 						l1_decay_loss += l1_decay * Math.abs(p[j]);
-						l2_decay_loss += l2_decay * p[j] * p[j] / 2; 
+						l2_decay_loss += l2_decay * p[j] * p[j] / 2;
 						var l1_grad = l1_decay * (p[j] > 0 ? 1.0 : -1.0 );
 						var l2_grad = l2_decay * p[j];
 
@@ -98,12 +97,12 @@
 							// Adagrad
 							var sub_g_i_j = g_i_j * g_i_j + g_sum_i[j];
 							g_sum_i[j] = sub_g_i_j;
-							p[j] -= this.learning_rate / Math.sqrt(sub_g_i_j + this.epsilon) * g_i_j;	
+							p[j] -= this.learning_rate / Math.sqrt(sub_g_i_j + this.epsilon) * g_i_j;
 						} else if (this.optimizer == 'adadelta') {
 							// Adadelta
 							g_sum_i[j] = this.ro * g_sum_i[j] + (1 - this.ro) * g_i_j * g_i_j;
 							var x_grad_i_j = - Math.sqrt(x_sum_i[j] + this.epsilon) / Math.sqrt(g_sum_i[j] + this.epsilon) * g_i_j;
-							
+
 							x_sum_i[j] = this.ro * x_sum_i[j] + (1 - this.ro) * x_grad_i_j * x_grad_i_j;
 							p[j] += x_grad_i_j;
 						} else {
@@ -118,12 +117,11 @@
 							}
 						}
 						// always 0 out the gradient
-						g[j] = 0.0; 
+						g[j] = 0.0;
 					}
-
 				}
 			}
-
+			
 			return {
 				forward_time: forward_time,
 				backward_time: backward_time,
@@ -132,8 +130,7 @@
 				cost_loss: cost_loss,
 				loss: cost_loss + l1_decay_loss + l2_decay_loss
 			}
-		}	
-
+		}
 	}
 
 	global.Trainer = Trainer;

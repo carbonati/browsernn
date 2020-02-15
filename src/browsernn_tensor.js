@@ -6,7 +6,8 @@
 			// n: number of rows 
 			// d: number of columns 
 			// depth: depth of the tensor
-				// if only 2 dimensions are passed as (n,d) the Tensor will create a depth of 1 as Tensor(1, 2, 1)
+				// if only 2 dimensions are passed as (n,d) the Tensor will 
+                // create a depth of 1 as Tensor(1, 2, 1)
 			// init_weight: array or constant to set the tensors weights to
 			// seed: seed to reinitialize random variables
 
@@ -23,13 +24,18 @@
 		this.w = global.zeros(this.n_cells);
 		this.dw = global.zeros(this.n_cells);
 
-		// weight normalized parameterization - to reduce variance over the distribution of weights
+		// weight normalized parameterization - to reduce variance over the 
+        // distribution of weights
 		if(typeof init_weight == 'undefined') {
 			var std = Math.sqrt(1.0/(this.n_cells));
 			for (var i=0; i<this.n_cells; i++) {
 				// hack for initializing weights that differ between layers
 				var reseed = seed+this.n_cells+i;
-				this.w[i] = typeof seed != "undefined" ? global.randn(0.0, std, reseed) : global.randn(0.0, std, undefined)
+                if (typeof seed != 'undefined') {
+                    self.w[i] = global.randn(0.0, std, reseed)  
+                } else {
+                   global.randn(0.0, std, undefined)  
+                }
 			}
 		} else if (Object.prototype.toString.call(init_weight) == '[object Array]') {
 			var weights_flat = global.flatten(init_weight);
